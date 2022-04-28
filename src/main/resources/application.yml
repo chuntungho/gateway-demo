@@ -36,6 +36,12 @@ spring:
       correlation-fields: [ "x-context-ip", "x-context-user-id" ]
 
   cloud:
+    # TODO https://github.com/spring-cloud/spring-cloud-commons/issues/747
+    loadbalancer:
+      retry:
+        enabled: true
+        avoid-previous-instance: true
+
     # static uri
     discovery.client.simple.instances:
       test:
@@ -44,7 +50,13 @@ spring:
 
     gateway:
       default-filters:
-        - name: Retry
+        - name: CustomRetry
+          args:
+            # the retry exceptions regardless of operation
+            exceptions:
+              - java.io.IOException
+              - org.springframework.cloud.gateway.support.NotFoundException
+              - io.github.resilience4j.circuitbreaker.CallNotPermittedException
       routes:
         - id: test
           uri: lb://test

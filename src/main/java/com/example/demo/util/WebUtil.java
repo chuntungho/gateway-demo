@@ -4,6 +4,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.util.StringUtils;
 
+import java.net.InetSocketAddress;
+
 public final class WebUtil {
     public static String findIp(ServerHttpRequest request) {
         HttpHeaders headers = request.getHeaders();
@@ -15,7 +17,10 @@ public final class WebUtil {
             ip = ip.substring(0, ip.indexOf(","));
         }
         if (!StringUtils.hasLength(ip) || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddress().getAddress().getHostAddress();
+            InetSocketAddress remoteAddress = request.getRemoteAddress();
+            if (remoteAddress != null) {
+                ip = remoteAddress.getAddress().getHostAddress();
+            }
         }
 
         return ip;
