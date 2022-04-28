@@ -1,0 +1,55 @@
+server.shutdown: GRACEFUL
+
+logging:
+  level:
+    org.springframework.cloud.gateway.filter: trace
+
+# default circuit breaker config without Bulkhead
+# https://github.com/spring-cloud/spring-cloud-circuitbreaker/issues/105
+# io.github.resilience4j.circuitbreaker.CircuitBreakerConfig
+resilience4j.circuitbreaker:
+  configs:
+    default:
+      slidingWindowType: COUNT_BASED
+      slidingWindowSize: 10
+      minimumNumberOfCalls: 2
+      permittedNumberOfCallsInHalfOpenState: 10
+      automaticTransitionFromOpenToHalfOpenEnabled: true
+      waitDurationInOpenState: 5s
+      failureRateThreshold: 50
+      eventConsumerBufferSize: 10
+      slowCallDurationThreshold: 10s
+      slowCallRateThreshold: 50
+
+# io.github.resilience4j.ratelimiter.RateLimiterConfig
+resilience4j.timelimiter:
+  configs:
+    default:
+      timeoutDuration: 30s
+      cancelRunningFuture: false
+
+spring:
+  sleuth:
+    # case-sensitive for sleuth
+    baggage:
+      remote-fields: [ "x-context-ip", "x-context-locale", "x-context-user-id" ]
+      correlation-fields: [ "x-context-ip", "x-context-user-id" ]
+
+  cloud:
+    # static uri
+    discovery.client.simple.instances:
+      test:
+        - uri: https://notfound1.xx
+        - uri: https://notfound2.google.com
+
+    gateway:
+      default-filters:
+        - name: Retry
+      routes:
+        - id: test
+          uri: lb://test
+          predicates:
+            - Path=/test/**
+          filters:
+            - StripPrefix=1
+            - CustomCircuitBreaker
