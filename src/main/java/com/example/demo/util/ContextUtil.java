@@ -1,6 +1,8 @@
 package com.example.demo.util;
 
 import brave.baggage.BaggageField;
+import org.springframework.cloud.sleuth.TraceContext;
+import org.springframework.cloud.sleuth.brave.bridge.BraveTraceContext;
 
 import java.util.Locale;
 
@@ -12,10 +14,10 @@ public class ContextUtil {
     private static final String LOCALE_FIELD = "x-context-locale";
     private static final String USER_ID_FIELD = "x-context-user-id";
 
-    public static void initIpAndLocale(String ip, Locale locale) {
-        setValue(IP_FIELD, ip);
+    public static void initIpAndLocale(String ip, Locale locale, TraceContext traceContext) {
+        setValue(traceContext, IP_FIELD, ip);
         if (locale != null) {
-            setValue(LOCALE_FIELD, locale.toString());
+            setValue(traceContext, LOCALE_FIELD, locale.toString());
         }
     }
 
@@ -23,10 +25,11 @@ public class ContextUtil {
         return getValue(IP_FIELD);
     }
 
-    private static void setValue(String name, String value) {
-        BaggageField field = BaggageField.getByName(name);
+    private static void setValue(TraceContext traceContext, String name, String value) {
+        brave.propagation.TraceContext braveTraceContext = BraveTraceContext.toBrave(traceContext);
+        BaggageField field = BaggageField.getByName(braveTraceContext, name);
         if (field != null) {
-            field.updateValue(value);
+            field.updateValue(braveTraceContext, value);
         }
     }
 
