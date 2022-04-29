@@ -49,6 +49,16 @@ spring:
         - uri: https://notfound2.google.com
 
     gateway:
+      # enable global cors in config
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allow-credentials: true
+            allowed-origin-patterns: '*'
+            allowed-headers: '*'
+            allowed-methods: '*'
+            max-age: 3600
+
       default-filters:
         - name: CustomRetry
           args:
